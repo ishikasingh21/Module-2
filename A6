@@ -1,0 +1,238 @@
+Source Code: Breadth First Search
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <limits.h>
+#define MAX_VERTICES 100
+struct Node {
+    int data;
+    struct Node* next;
+};
+struct Queue {
+    int front, rear, size;
+    unsigned capacity;
+    int* array;
+};
+struct Graph {
+    int numVertices;
+    struct Node** adjLists;
+    char** color;
+    int* distance;
+    int* predecessor;
+};
+struct Node* createNode(int data) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    if (newNode == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    newNode->data = data;
+    newNode->next = NULL;
+    return newNode;
+}
+struct Queue* createQueue(unsigned capacity) {
+    struct Queue* queue = (struct Queue*)malloc(sizeof(struct Queue));
+    if (queue == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    queue->capacity = capacity;
+    queue->front = queue->size = 0;
+    queue->rear = capacity - 1;
+    queue->array = (int*)malloc(queue->capacity * sizeof(int));
+    if (queue->array == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    return queue;
+}
+struct Graph* createGraph(int numVertices) {
+    struct Graph* graph = (struct Graph*)malloc(sizeof(struct Graph));
+    if (graph == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    graph->numVertices = numVertices;
+    graph->adjLists = (struct Node**)malloc(numVertices * sizeof(struct Node*));
+    graph->color = (char**)malloc(numVertices * sizeof(char*));
+    graph->distance = (int*)malloc(numVertices * sizeof(int));
+    graph->predecessor = (int*)malloc(numVertices * sizeof(int));
+    if (graph->adjLists == NULL || graph->color == NULL || graph->distance == NULL || graph->predecessor == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < numVertices; ++i) {
+        graph->adjLists[i] = NULL;
+        graph->color[i] = "white";
+        graph->distance[i] = INT_MAX;
+        graph->predecessor[i] = -1;
+    }
+    return graph;
+}
+void addEdge(struct Graph* graph, int src, int dest) {
+    struct Node* newNode = createNode(dest);
+    newNode->next = graph->adjLists[src];
+    graph->adjLists[src] = newNode;
+}
+void enqueue(struct Queue* queue, int item) {
+    if (queue->size == queue->capacity) {
+        printf("Queue is full.\n");
+        exit(EXIT_FAILURE);
+    }
+    queue->rear = (queue->rear + 1) % queue->capacity;
+    queue->array[queue->rear] = item;
+    queue->size += 1;
+}
+int dequeue(struct Queue* queue) {
+    if (queue->size == 0) {
+        printf("Queue is empty.\n");
+        exit(EXIT_FAILURE);
+    }
+    int item = queue->array[queue->front];
+    queue->front = (queue->front + 1) % queue->capacity;
+    queue->size -= 1;
+    return item;
+}
+void BFS(struct Graph* graph, int s) {
+    graph->color[s] = "gray";
+    graph->distance[s] = 0;
+    graph->predecessor[s] = -1;
+    struct Queue* queue = createQueue(graph->numVertices);
+    enqueue(queue, s);
+    while (queue->size != 0) {
+        int u = dequeue(queue);
+        struct Node* temp = graph->adjLists[u];
+        while (temp) {
+            int v = temp->data;
+            if (graph->color[v] == "white") {
+                graph->color[v] = "gray";
+                graph->distance[v] = graph->distance[u] + 1;
+                graph->predecessor[v] = u;
+                enqueue(queue, v);
+            }
+            temp = temp->next;
+        }
+        graph->color[u] = "black";
+    }
+}
+void printBFS(struct Graph* graph, int s) {
+    printf("BFS traversal starting from vertex %d:\n", s);
+    for (int i = 0; i < graph->numVertices; i++) {
+        printf("Vertex %d: color-%s, distance-%d, predecessor-%d\n", i, graph->color[i], graph->distance[i], graph->predecessor[i]);
+    }
+}
+int main() {
+    struct Graph* graph = createGraph(5);
+    addEdge(graph, 0, 1);
+    addEdge(graph, 0, 2);
+    addEdge(graph, 1, 3);
+    addEdge(graph, 1, 4);
+    addEdge(graph, 2, 3);
+    addEdge(graph, 3, 4);
+    int source = 0;
+    BFS(graph, source);
+    printBFS(graph, source);
+    return 0;
+}
+Source Code: Depth First Search
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#define MAX_VERTICES 100
+struct Node {
+    int data;
+    struct Node* next;
+};
+struct Graph {
+    int V; // Number of vertices
+    struct Node** adj; // Adjacency Lists
+    char** color; // Color of vertices: white, gray, black
+    int* distance; // Distance of each vertex from the source
+    int* predecessor; // Predecessor of each vertex in DFS traversal
+};
+struct Node* createNode(int data) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    if (newNode == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    newNode->data = data;
+    newNode->next = NULL;
+    return newNode;
+}
+struct Graph* createGraph(int V) {
+    struct Graph* graph = (struct Graph*)malloc(sizeof(struct Graph));
+    if (graph == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    graph->V = V;
+    graph->adj = (struct Node**)malloc(V * sizeof(struct Node*));
+    graph->color = (char**)malloc(V * sizeof(char*));
+    graph->distance = (int*)malloc(V * sizeof(int));
+    graph->predecessor = (int*)malloc(V * sizeof(int));
+    if (graph->adj == NULL || graph->color == NULL || graph->distance == NULL || graph->predecessor == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i = 0; i < V; ++i) {
+        graph->adj[i] = NULL;
+        graph->color[i] = "white";
+        graph->distance[i] = INT_MAX;
+        graph->predecessor[i] = -1;
+    }
+    return graph;
+}
+void addEdge(struct Graph* graph, int v, int w) {
+    struct Node* newNode = createNode(w);
+    newNode->next = graph->adj[v];
+    graph->adj[v] = newNode;
+}
+void DFSUtil(struct Graph* graph, int u, int dist) {
+    graph->color[u] = "gray";
+    printf("Visited vertex: %d\n", u);
+    graph->distance[u] = dist;
+    struct Node* temp = graph->adj[u];
+    while (temp != NULL) {
+        int v = temp->data;
+        if (graph->color[v] == "white") {
+            graph->predecessor[v] = u;
+            DFSUtil(graph, v, dist + 1);
+        }
+        temp = temp->next;
+    }
+    graph->color[u] = "black";
+}
+void DFS(struct Graph* graph, int s) {
+    for (int i = 0; i < graph->V; i++) {
+        graph->color[i] = "white";
+        graph->distance[i] = INT_MAX;
+        graph->predecessor[i] = -1;
+    }
+    DFSUtil(graph, s, 0);
+}
+void printDFS(struct Graph* graph) {
+    printf("DFS traversal:\n");
+    for (int i = 0; i < graph->V; i++) {
+        printf("Vertex %d: color-%s, distance-%d, predecessor-%d\n", i, graph->color[i], graph->distance[i], graph->predecessor[i]);
+    }
+}
+int main() {
+    int V = 4;
+    struct Graph* graph = createGraph(V);
+    addEdge(graph, 0, 1);
+    addEdge(graph, 0, 2);
+    addEdge(graph, 1, 2);
+    addEdge(graph, 2, 0);
+    addEdge(graph, 2, 3);
+    addEdge(graph, 3, 3);
+    int source = 2;
+    DFS(graph, source);
+    printDFS(graph);
+    return 0;
+}
+
+
+
+
+
