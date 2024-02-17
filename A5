@@ -1,0 +1,180 @@
+Source Code: Fractional Knapsack Problem
+#include <stdio.h>
+#include <stdlib.h>
+struct Item {
+    double profit;
+    double weight;
+};
+int compare(const void* a, const void* b) {
+    struct Item* itemA = (struct Item*)a;
+    struct Item* itemB = (struct Item*)b;
+    double ratioA = itemA->profit / itemA->weight;
+    double ratioB = itemB->profit / itemB->weight;
+    if (ratioA < ratioB)
+        return 1;
+    else if (ratioA > ratioB)
+        return -1;
+    else
+        return 0;
+}
+double fractionalKnapsack(double W, struct Item arr[], int n) {
+    qsort(arr, n, sizeof(struct Item), compare);
+    double finalValue = 0.0;
+    for (int i = 0; i < n; i++) {
+        if (arr[i].weight <= W) {
+            W -= arr[i].weight;
+            finalValue += arr[i].profit;
+        } else {
+            finalValue += arr[i].profit * W / arr[i].weight;
+            break;
+        }
+    }
+    return finalValue;
+}
+int main() {
+    double W;
+    int n;
+    printf("Enter the capacity of the knapsack: ");
+    scanf("%lf", &W);
+    printf("Enter the number of items: ");
+    scanf("%d", &n);
+    struct Item* arr = (struct Item*)malloc(n * sizeof(struct Item));
+    if (arr == NULL) {
+        printf("Memory allocation failed.\n");
+        return EXIT_FAILURE;
+    }
+    for (int i = 0; i < n; i++) {
+        printf("Enter profit and weight for item %d: ", i + 1);
+        scanf("%lf %lf", &arr[i].profit, &arr[i].weight);
+    }
+    double maxVal = fractionalKnapsack(W, arr, n);
+    printf("Maximum value in Knapsack = %.2lf\n", maxVal);
+    free(arr); 
+    return 0;
+} 
+Source Code: Huffman Coding
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+struct HuffmanNode {
+    char character;
+    int frequency;
+    struct HuffmanNode *left, *right;
+};
+
+struct PriorityQueueNode {
+    struct HuffmanNode *data;
+    struct PriorityQueueNode *next;
+};
+struct PriorityQueue {
+    struct PriorityQueueNode *front;
+};
+struct PriorityQueueNode* createPriorityQueueNode(struct HuffmanNode* data) {
+    struct PriorityQueueNode* newNode = (struct PriorityQueueNode*)malloc(sizeof(struct PriorityQueueNode));
+    if (newNode == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    newNode->data = data;
+    newNode->next = NULL;
+    return newNode;
+struct PriorityQueue* createPriorityQueue() {
+    struct PriorityQueue* pq = (struct PriorityQueue*)malloc(sizeof(struct PriorityQueue));
+    if (pq == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    pq->front = NULL;
+    return pq;
+}
+void push(struct PriorityQueue* pq, struct HuffmanNode* data) {
+    struct PriorityQueueNode* newNode = createPriorityQueueNode(data);
+    if (pq->front == NULL || pq->front->data->frequency >= data->frequency) {
+        newNode->next = pq->front;
+        pq->front = newNode;
+    } else {
+        struct PriorityQueueNode* current = pq->front;
+        while (current->next != NULL && current->next->data->frequency < data->frequency) {
+            current = current->next;
+        }
+        newNode->next = current->next;
+        current->next = newNode;
+    }
+}
+struct HuffmanNode* pop(struct PriorityQueue* pq) {
+    if (pq->front == NULL) {
+        printf("Priority Queue is empty.\n");
+        exit(EXIT_FAILURE);
+    }
+    struct PriorityQueueNode* temp = pq->front;
+    struct HuffmanNode* data = temp->data;
+    pq->front = pq->front->next;
+    free(temp);
+    return data;
+}
+struct HuffmanNode* createHuffmanNode(char character, int frequency) {
+    struct HuffmanNode* newNode = (struct HuffmanNode*)malloc(sizeof(struct HuffmanNode));
+    if (newNode == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+    newNode->character = character;
+    newNode->frequency = frequency;
+    newNode->left = newNode->right = NULL;
+    return newNode;
+}
+struct HuffmanNode* buildHuffmanTree(char* input) {
+    int frequency[256] = {0}; // Assuming ASCII characters
+    for (int i = 0; input[i] != '\0'; i++) {
+        frequency[(int)input[i]]++;
+    }
+    struct PriorityQueue* pq = createPriorityQueue();
+    for (int i = 0; i < 256; i++) {
+        if (frequency[i] > 0) {
+            struct HuffmanNode* node = createHuffmanNode((char)i, frequency[i]);
+            push(pq, node);
+        }
+    }
+    while (pq->front->next != NULL) {
+        struct HuffmanNode* left = pop(pq);
+        struct HuffmanNode* right = pop(pq);
+        struct HuffmanNode* parent = createHuffmanNode('$', left->frequency + right->frequency);
+        parent->left = left;
+        parent->right = right;
+        push(pq, parent);
+    }
+    return pop(pq);
+}
+void generateCodes(struct HuffmanNode* root, char* code, int index, char** huffmanCodes) {
+    if (root == NULL) return;
+    if (root->left == NULL && root->right == NULL) {
+        code[index] = '\0';
+        huffmanCodes[root->character] = strdup(code);
+    }
+    code[index] = '0';
+    generateCodes(root->left, code, index + 1, huffmanCodes);
+    code[index] = '1';
+    generateCodes(root->right, code, index + 1, huffmanCodes);
+}
+void printHuffmanCodes(char** huffmanCodes) {
+    printf("Huffman Codes:\n");
+    for (int i = 0; i < 256; i++) {
+        if (huffmanCodes[i] != NULL) {
+            printf("%c : %s\n", (char)i, huffmanCodes[i]);
+            free(huffmanCodes[i]); // Free allocated memory for each code
+        }
+    }
+}
+int main() {
+    char input[1000];
+    printf("Enter the string: ");
+    scanf("%[^\n]", input);
+    struct HuffmanNode* root = buildHuffmanTree(input);
+    char* huffmanCodes[256] = {NULL}; // Assuming ASCII characters
+    char code[1000];
+    generateCodes(root, code, 0, huffmanCodes);
+    printHuffmanCodes(huffmanCodes);
+    return 0;
+} 
+
+ 
