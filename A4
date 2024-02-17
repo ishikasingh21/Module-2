@@ -129,10 +129,4 @@ int main() {
     free(lcsString);
     return 0;
 }
-Output: 
 
-Coin Change Problem
- 
-
- Longest Common Subsequence
- 
